@@ -2,15 +2,298 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Snake</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibe Coder MVP</title>
+  <style>
+    body {
+      margin: 0; padding: 0; box-sizing: border-box;
+      background-color: #0f172a; color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background-color: #1e293b; border-bottom: 1px solid #334155;
+      padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    @media (min-width: 600px) { 
+      header { flex-direction: row; justify-content: space-between; align-items: center; } 
+    }
+    .logo { font-size: 1.25rem; font-weight: bold; color: #38bdf8; margin: 0; }
+    .key-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+    @media (min-width: 600px) { .key-container { width: auto; } }
+    
+    input[type="password"], input[type="text"] {
+      background-color: #0f172a; color: #fff; border: 1px solid #475569;
+      border-radius: 6px; padding: 6px 12px; font-size: 0.875rem; flex: 1; min-width: 160px;
+    }
+    button {
+      border: none; border-radius: 6px; padding: 6px 16px;
+      font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-blue { background-color: #2563eb; color: white; }
+    .btn-blue:hover { background-color: #1d4ed8; }
+    .btn-emerald { background-color: #059669; color: white; }
+    .btn-emerald:hover { background-color: #047857; }
+    
+    main { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+    @media (min-width: 768px) { 
+      main { flex-direction: row; } 
+    }
+    
+    .panel-chat {
+      height: 40%; 
+      display: flex; 
+      flex-direction: column;
+      border-bottom: 1px solid #334155; 
+      background-color: #0f172a;
+    }
+    .panel-preview { 
+      height: 60%; 
+      display: flex; 
+      flex-direction: column; 
+      background-color: #020617; 
+    }
+    
+    @media (min-width: 768px) { 
+      .panel-chat { height: 100%; width: 40%; border-bottom: none; border-right: 1px solid #334155; }
+      .panel-preview { height: 100%; width: 60%; }
+    }
+    
+    .chat-history { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .msg { background-color: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155; font-size: 0.875rem; }
+    .msg-user .sender { color: #34d399; font-weight: bold; }
+    .msg-engine .sender { color: #38bdf8; font-weight: bold; }
+    
+    .input-area { padding: 12px; background-color: #1e293b; display: flex; gap: 8px; border-t: 1px solid #334155; align-items: center; }
+    textarea {
+      flex: 1; background-color: #0f172a; color: white; border: 1px solid #475569;
+      border-radius: 6px; padding: 8px; font-size: 0.875rem; resize: none; height: 36px;
+    }
+    
+    .preview-bar { background-color: #1e293b; padding: 6px 16px; font-size: 0.75rem; color: #94a3b8; display: flex; justify-content: space-between; }
+    .sandbox-wrapper { flex: 1; margin: 12px; background-color: white; border-radius: 8px; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
-  <script src="render.js"></script><!-- defines canvas, ctx, draw() -->
-  <script src="input.js"></script><!-- attaches keyboard + touch listeners -->
-  <script src="game.js"></script> <!-- state, loop, boot -->
 
+  <header>
+    <h1 class="logo">⚡ VibeCoder.ai</h1>
+    <div class="key-container">
+      <input type="password" id="api-key-input" placeholder="Paste OpenRouter Free Key">
+      <input type="text" id="model-input" value="openrouter/free" placeholder="Model Identifier">
+      <button id="save-key-btn" class="btn-blue">Save Configuration</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel-chat">
+      <div id="chat-history" class="chat-history">
+        <div class="msg">
+          <p style="color:#93c5fd; font-weight:bold; margin:0 0 4px 0;">System</p>
+          <p style="margin:0;">Enter your Key, choose a model, type your layout idea, and tap Vibe!</p>
+        </div>
+      </div>
+      <div class="input-area">
+        <textarea id="prompt-input" placeholder="e.g., Build a countdown timer app..."></textarea>
+        <button id="generate-btn" class="btn-emerald">Vibe</button>
+      </div>
+    </section>
+
+    <section class="panel-preview">
+      <div class="preview-bar">
+        <span>LIVE PREVIEW</span>
+        <span id="status-indicator">Idle</span>
+      </div>
+      <div class="sandbox-wrapper">
+        <iframe id="preview-sandbox"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+    
+    const SYSTEM_PROMPT = `You are a Vibe Coding Engine. 
+If the user wants a brand-new app, output a complete, standalone HTML document starting with <!DOCTYPE html>. Do not wrap it in markdown code blocks.
+If the user is asking for a change, tweak, or bug fix to an app you already wrote, do NOT rewrite the whole thing. Instead, output precise patch blocks using this exact format:
+<<<<<<< SEARCH
+[exact lines of code from the existing app that need to change]
+=======
+[the new lines of code that should replace the search block]
+>>>>>>> REPLACE`;
+
+    let masterApplicationCode = ""; 
+
+    const apiKeyInput = document.getElementById('api-key-input');
+    const modelInput = document.getElementById('model-input');
+    const saveKeyBtn = document.getElementById('save-key-btn');
+    const promptInput = document.getElementById('prompt-input');
+    const generateBtn = document.getElementById('generate-btn');
+    const chatHistory = document.getElementById('chat-history');
+    const previewSandbox = document.getElementById('preview-sandbox');
+    const statusIndicator = document.getElementById('status-indicator');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedKey = localStorage.getItem('openrouter_key');
+      const savedModel = localStorage.getItem('openrouter_model');
+      if (savedKey) apiKeyInput.value = savedKey;
+      if (savedModel) modelInput.value = savedModel;
+      previewSandbox.srcdoc = "<h1 style='font-family:sans-serif; text-align:center; margin-top:40px; color:#64748b;'>Your AI app will render here live</h1>";
+    });
+
+    saveKeyBtn.addEventListener('click', () => {
+      localStorage.setItem('openrouter_key', apiKeyInput.value.trim());
+      localStorage.setItem('openrouter_model', modelInput.value.trim());
+      alert('Configuration saved locally!');
+    });
+
+    function addChatMessage(sender, text) {
+      const isUser = sender === "You";
+      const msgHtml = `
+        <div class="msg ${isUser ? 'msg-user' : 'msg-engine'}">
+          <p class="sender">${sender}</p>
+          <p style="margin:5px 0 0 0; white-space:pre-wrap;">${text}</p>
+        </div>`;
+      chatHistory.insertAdjacentHTML('beforeend', msgHtml);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function applyCodePatches(currentCode, aiResponse) {
+      const patchRegex = /<<<<<<< SEARCH\n([\s\S]*?)\n=======\n([\s\S]*?)\n>>>>>>> REPLACE/g;
+      let patchedCode = currentCode;
+      let match;
+      let patchCount = 0;
+
+      while ((match = patchRegex.exec(aiResponse)) !== null) {
+        const searchBlock = match[1];
+        const replaceBlock = match[2];
+        if (patchedCode.includes(searchBlock)) {
+          patchedCode = patchedCode.replace(searchBlock, replaceBlock);
+          patchCount++;
+        }
+      }
+      return { patchedCode, patchCount };
+    }
+
+    generateBtn.addEventListener('click', async () => {
+      const apiKey = localStorage.getItem('openrouter_key') || apiKeyInput.value.trim();
+      const modelSelection = modelInput.value.trim() || "openrouter/free";
+      const prompt = promptInput.value.trim();
+
+      if (!apiKey) return alert("Please enter and save your OpenRouter Key first!");
+      if (!prompt) return alert("Type a prompt!");
+
+      addChatMessage("You", prompt);
+      promptInput.value = "";
+      statusIndicator.innerText = "Coding...";
+      generateBtn.disabled = true;
+
+      let completeCodeOutput = "";
+      let messages = [{ role: "system", content: SYSTEM_PROMPT }];
+
+      if (masterApplicationCode === "") {
+        messages.push({ role: "user", content: prompt });
+      } else {
+        messages.push({ role: "assistant", content: "Current app code:\n" + masterApplicationCode });
+        messages.push({ role: "user", content: `Modify the app: ${prompt}` });
+      }
+
+      try {
+        const response = await fetch(OPENROUTER_URL, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: modelSelection,
+            messages: messages,
+            stream: true
+          })
+        });
+
+        if (!response.ok) {
+          const errorDetails = await response.text();
+          throw new Error(`API Error (${response.status}): ${errorDetails}`);
+        }
+
+        if (!response.body) throw new Error("No readable data stream received.");
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        
+        addChatMessage("Engine", "Thinking...");
+        const responseTextContainer = chatHistory.lastElementChild.querySelector('p:nth-child(2)');
+
+        let streamBuffer = ""; 
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          streamBuffer += decoder.decode(value, { stream: true });
+          const lines = streamBuffer.split("\n");
+          streamBuffer = lines.pop(); 
+
+          for (const line of lines) {
+            const cleanLine = line.trim();
+            if (cleanLine.startsWith("data: ")) {
+              const dataText = cleanLine.slice(6).trim();
+              if (dataText === "[DONE]") break;
+              try {
+                const parsed = JSON.parse(dataText);
+                const content = parsed.choices[0]?.delta?.content || "";
+                if (content) {
+                  completeCodeOutput += content;
+                  responseTextContainer.innerText = "Writing source lines...";
+                  
+                  if (masterApplicationCode === "") {
+                    previewSandbox.srcdoc = completeCodeOutput;
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+        if (!completeCodeOutput.trim()) {
+          throw new Error("AI completed the call but generated zero lines of code.");
+        }
+
+        if (masterApplicationCode === "") {
+          masterApplicationCode = completeCodeOutput;
+          statusIndicator.innerText = "App Ready";
+          responseTextContainer.innerText = "Fresh application built successfully!";
+        } else {
+          const result = applyCodePatches(masterApplicationCode, completeCodeOutput);
+          if (result.patchCount > 0) {
+            masterApplicationCode = result.patchedCode;
+            previewSandbox.srcdoc = masterApplicationCode;
+            statusIndicator.innerText = "Patched successfully";
+            responseTextContainer.innerText = `Applied ${result.patchCount} updates to the application layout!`;
+          } else {
+            statusIndicator.innerText = "App Ready";
+            responseTextContainer.innerText = "Modification complete.";
+          }
+        }
+
+      } catch (err) {
+        console.error(err);
+        statusIndicator.innerText = "Error";
+        addChatMessage("Engine Error", err.message || "Failed to compile code stream.");
+      } finally {
+        generateBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
