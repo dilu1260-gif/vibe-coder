@@ -1,6 +1,6 @@
-// api/generate.js - Secure Backend Proxy
+// api/generate.js - Smart Error Catching Proxy
 export const config = {
-  runtime: 'edge', // Enables high-speed streaming response compatibility
+  runtime: 'edge', 
 };
 
 export default async function handler(req) {
@@ -10,10 +10,16 @@ export default async function handler(req) {
 
   try {
     const { prompt, systemHistory, masterCode } = await req.json();
-
-    // 1. SECURELY FETCH YOUR KEY FROM VERCEL ENVIRONMENT VARIABLES
     const API_KEY = process.env.OPENROUTER_API_KEY; 
-    const MODEL = "meta-llama/llama-3.3-70b-instruct:free"; // Keeping it on the free tier
+
+    // 1. Check if Vercel actually loaded your key
+    if (!API_KEY) {
+      return new Response(JSON.stringify({ 
+        error: 'Backend Configuration Error: The OPENROUTER_API_KEY environment variable is completely missing on Vercel.' 
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const MODEL = "meta-llama/llama-3.3-70b-instruct:free";
 
     const systemPrompt = `You are a Vibe Coding Engine. 
 If the user wants a brand-new app, output a complete, standalone HTML document starting with <!DOCTYPE html>. Do not wrap it in markdown code blocks.
@@ -24,9 +30,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
 [the new lines of code that should replace the search block]
 >>>>>>> REPLACE`;
 
-    // 2. REBUILD THE CONVERSATION STRUCTURE SECURELY ON THE SERVER
     let messages = [{ role: "system", content: systemPrompt }];
-    
     if (!masterCode) {
       messages.push({ role: "user", content: prompt });
     } else {
@@ -34,13 +38,12 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
       messages.push({ role: "user", content: `Modify the app: ${prompt}` });
     }
 
-    // 3. CALL OPENROUTER FROM THE SERVER
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://vibecoder.ai", // Optional branding identifier
+        "HTTP-Referer": "https://vibe-coder.vercel.app", 
       },
       body: JSON.stringify({
         model: MODEL,
@@ -49,8 +52,19 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
       })
     });
 
-    // 4. STREAM THE TOKENS DIRECTLY BACK TO THE USER'S MOBILE BROWSER
-    return new Response(response.body, {
+    // 2. IF OPENROUTER FAILS, CAPTURE THE TRUE REASON AND STOP THE ROUTE
+    if (!openRouterResponse.ok) {
+      const errorText = await openRouterResponse.text();
+      return new Response(JSON.stringify({ 
+        error: `OpenRouter Server Rejected Request (${openRouterResponse.status}): ${errorText}` 
+      }), { 
+        status: openRouterResponse.status, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
+    }
+
+    // 3. If everything is green, pass the clean stream data back
+    return new Response(openRouterResponse.body, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -59,6 +73,9 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Server proxy failed to route payload tokens' }), { status: 500 });
+    return new Response(JSON.stringify({ error: `Internal Server Proxy Crash: ${error.message}` }), { 
+      status: 500, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 }
