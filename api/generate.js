@@ -21,6 +21,7 @@ export default async function handler(req) {
     // Sequential list of free models to try if the primary one is rate-limited
     const FREE_MODELS_POOL = [
       "meta-llama/llama-3.3-70b-instruct:free",
+      "tencent/hy3:free", // Active until July 21, 2026
       "qwen/qwen-2.5-72b-instruct:free"
     ];
 
