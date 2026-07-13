@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
+  <!-- SEO Search Tags -->
   <title>VibeCoder.ai - Instant AI Web App Generator</title>
   <meta name="description" content="Build, preview, and deploy single-page web applications instantly in your browser using AI vibe coding.">
   <meta name="keywords" content="vibe coding, ai code generator, openrouter, prompt to app, build websites with ai">
@@ -21,30 +22,19 @@
     }
     header {
       background-color: #1e293b; border-bottom: 1px solid #334155;
-      padding: 12px; display: flex; flex-direction: column; gap: 8px;
-    }
-    @media (min-width: 768px) { 
-      header { flex-direction: row; justify-content: space-between; align-items: center; } 
+      padding: 12px; display: flex; justify-content: space-between; align-items: center;
     }
     .logo-area { display: flex; align-items: center; gap: 10px; }
     .logo { font-size: 1.25rem; font-weight: bold; color: #38bdf8; margin: 0; }
-    .key-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
-    @media (min-width: 768px) { .key-container { width: auto; } }
     
-    input[type="password"], input[type="text"] {
-      background-color: #0f172a; color: #fff; border: 1px solid #475569;
-      border-radius: 6px; padding: 6px 12px; font-size: 0.875rem; flex: 1; min-width: 150px;
-    }
     button {
       border: none; border-radius: 6px; padding: 6px 14px;
       font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
       display: inline-flex; align-items: center; gap: 4px;
     }
-    .btn-blue { background-color: #2563eb; color: white; }
-    .btn-blue:hover { background-color: #1d4ed8; }
     .btn-emerald { background-color: #059669; color: white; }
     .btn-emerald:hover { background-color: #047857; }
-    .btn-secondary { background-color: #475569; color: white; font-size: 0.75rem; padding: 4px 10px; }
+    .btn-secondary { background-color: #475569; color: white; font-size: 0.75rem; padding: 6px 12px; }
     .btn-secondary:hover { background-color: #334155; }
     .btn-danger { background-color: #dc2626; color: white; font-size: 0.75rem; padding: 4px 10px; }
     .btn-danger:hover { background-color: #b91c1c; }
@@ -103,18 +93,14 @@
       <h1 class="logo">⚡ VibeCoder.ai</h1>
       <button id="new-project-btn" class="btn-danger" title="Clear current session and start fresh">New App</button>
     </div>
-    <div class="key-container">
-      <input type="password" id="api-key-input" placeholder="OpenRouter Free Key">
-      <input type="text" id="model-input" value="openrouter/free" placeholder="Model Identifier">
-      <button id="save-key-btn" class="btn-blue">Save Config</button>
-    </div>
+    <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Public Access Enabled</div>
   </header>
 
   <main>
     <section class="panel-chat">
       <div id="chat-history" class="chat-history"></div>
       <div class="input-area">
-        <textarea id="prompt-input" placeholder="Modify your application layout here..."></textarea>
+        <textarea id="prompt-input" placeholder="What should we build or change?..."></textarea>
         <button id="generate-btn" class="btn-emerald">Vibe</button>
       </div>
     </section>
@@ -133,23 +119,9 @@
   </main>
 
   <script>
-    const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-    
-    const SYSTEM_PROMPT = `You are a Vibe Coding Engine. 
-If the user wants a brand-new app, output a complete, standalone HTML document starting with <!DOCTYPE html>. Do not wrap it in markdown code blocks.
-If the user is asking for a change, tweak, or bug fix to an app you already wrote, do NOT rewrite the whole thing. Instead, output precise patch blocks using this exact format:
-<<<<<<< SEARCH
-[exact lines of code from the existing app that need to change]
-=======
-[the new lines of code that should replace the search block]
->>>>>>> REPLACE`;
-
     let masterApplicationCode = "";
     let systemMessagesHistory = [];
 
-    const apiKeyInput = document.getElementById('api-key-input');
-    const modelInput = document.getElementById('model-input');
-    const saveKeyBtn = document.getElementById('save-key-btn');
     const promptInput = document.getElementById('prompt-input');
     const generateBtn = document.getElementById('generate-btn');
     const chatHistory = document.getElementById('chat-history');
@@ -158,14 +130,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
     const downloadBtn = document.getElementById('download-btn');
     const newProjectBtn = document.getElementById('new-project-btn');
 
-    // Load setup and persistent session data on startup
     window.addEventListener('DOMContentLoaded', () => {
-      const savedKey = localStorage.getItem('openrouter_key');
-      const savedModel = localStorage.getItem('openrouter_model');
-      if (savedKey) apiKeyInput.value = savedKey;
-      if (savedModel) modelInput.value = savedModel;
-
-      // Restore session history if it exists
       const savedCode = localStorage.getItem('vibe_master_code');
       const savedChat = localStorage.getItem('vibe_chat_history');
 
@@ -179,17 +144,11 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
       }
     });
 
-    saveKeyBtn.addEventListener('click', () => {
-      localStorage.setItem('openrouter_key', apiKeyInput.value.trim());
-      localStorage.setItem('openrouter_model', modelInput.value.trim());
-      alert('Configuration saved securely in your browser session!');
-    });
-
     function resetToDefaultWelcome() {
       chatHistory.innerHTML = `
         <div class="msg msg-system">
           <p class="sender">System</p>
-          <p style="margin:0;">Welcome to VibeCoder.ai! Add an OpenRouter Key, pick a model tier, then input a prompt down below to build or update single-page software structures instantly.</p>
+          <p style="margin:0;">Welcome to VibeCoder.ai! Type an application layout instruction below to start vibe coding instantly.</p>
         </div>`;
       masterApplicationCode = "";
       systemMessagesHistory = [];
@@ -204,7 +163,6 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
       }
     });
 
-    // Export generated code directly to an HTML file
     downloadBtn.addEventListener('click', () => {
       if (!masterApplicationCode) return alert("There is no code generated yet to download!");
       const blob = new Blob([masterApplicationCode], { type: "text/html" });
@@ -265,11 +223,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
     }
 
     generateBtn.addEventListener('click', async () => {
-      const apiKey = localStorage.getItem('openrouter_key') || apiKeyInput.value.trim();
-      const modelSelection = modelInput.value.trim() || "openrouter/free";
       const prompt = promptInput.value.trim();
-
-      if (!apiKey) return alert("Please enter and save your OpenRouter Key first!");
       if (!prompt) return alert("Type a layout prompt!");
 
       addChatMessage("You", prompt);
@@ -278,35 +232,27 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
       generateBtn.disabled = true;
 
       let completeCodeOutput = "";
-      let messages = [{ role: "system", content: SYSTEM_PROMPT }];
-
-      if (masterApplicationCode === "") {
-        messages.push({ role: "user", content: prompt });
-      } else {
-        messages.push({ role: "assistant", content: "Current app code:\n" + masterApplicationCode });
-        messages.push({ role: "user", content: `Modify the app: ${prompt}` });
-      }
 
       try {
-        const response = await fetch(OPENROUTER_URL, {
+        // CALLING SECURE BACKEND PROXY (Hides your OpenRouter key completely)
+        const response = await fetch("/api/generate", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${apiKey}`,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: modelSelection,
-            messages: messages,
-            stream: true
+            prompt: prompt,
+            masterCode: masterApplicationCode,
+            systemHistory: systemMessagesHistory
           })
         });
 
         if (!response.ok) {
           const errorDetails = await response.text();
-          throw new Error(`API Error (${response.status}): ${errorDetails}`);
+          throw new Error(`API Proxy Error (${response.status}): ${errorDetails}`);
         }
 
-        if (!response.body) throw new Error("No readable stream received.");
+        if (!response.body) throw new Error("No readable data stream returned from proxy.");
         
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -334,7 +280,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
                 const content = parsed.choices[0]?.delta?.content || "";
                 if (content) {
                   completeCodeOutput += content;
-                  responseTextContainer.innerText = "Streaming application lines...";
+                  responseTextContainer.innerText = "Streaming layout code lines...";
                   
                   if (masterApplicationCode === "") {
                     previewSandbox.srcdoc = completeCodeOutput;
@@ -361,7 +307,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
             localStorage.setItem('vibe_master_code', masterApplicationCode);
             previewSandbox.srcdoc = masterApplicationCode;
             statusIndicator.innerText = "App Patched";
-            responseTextContainer.innerText = `Applied ${result.patchCount} functional upgrades to your active layout container!`;
+            responseTextContainer.innerText = `Applied ${result.patchCount} updates to your active layout container!`;
           } else {
             statusIndicator.innerText = "App Ready";
             responseTextContainer.innerText = "Modification run completed.";
@@ -371,7 +317,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
       } catch (err) {
         console.error(err);
         statusIndicator.innerText = "Error";
-        addChatMessage("Engine Error", err.message || "Failed to parse streaming response tokens.");
+        addChatMessage("Engine Error", err.message || "Failed to process streaming server tokens.");
       } finally {
         generateBtn.disabled = false;
       }
@@ -379,4 +325,3 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
   </script>
 </body>
 </html>
-
