@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vibe Coder MVP</title>
+  
+  <title>VibeCoder.ai - Instant AI Web App Generator</title>
+  <meta name="description" content="Build, preview, and deploy single-page web applications instantly in your browser using AI vibe coding.">
+  <meta name="keywords" content="vibe coding, ai code generator, openrouter, prompt to app, build websites with ai">
+  <meta name="author" content="dilu1260-gif">
+
   <style>
     body {
       margin: 0; padding: 0; box-sizing: border-box;
@@ -18,25 +23,31 @@
       background-color: #1e293b; border-bottom: 1px solid #334155;
       padding: 12px; display: flex; flex-direction: column; gap: 8px;
     }
-    @media (min-width: 600px) { 
+    @media (min-width: 768px) { 
       header { flex-direction: row; justify-content: space-between; align-items: center; } 
     }
+    .logo-area { display: flex; align-items: center; gap: 10px; }
     .logo { font-size: 1.25rem; font-weight: bold; color: #38bdf8; margin: 0; }
     .key-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
-    @media (min-width: 600px) { .key-container { width: auto; } }
+    @media (min-width: 768px) { .key-container { width: auto; } }
     
     input[type="password"], input[type="text"] {
       background-color: #0f172a; color: #fff; border: 1px solid #475569;
-      border-radius: 6px; padding: 6px 12px; font-size: 0.875rem; flex: 1; min-width: 160px;
+      border-radius: 6px; padding: 6px 12px; font-size: 0.875rem; flex: 1; min-width: 150px;
     }
     button {
-      border: none; border-radius: 6px; padding: 6px 16px;
-      font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.2s;
+      border: none; border-radius: 6px; padding: 6px 14px;
+      font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 4px;
     }
     .btn-blue { background-color: #2563eb; color: white; }
     .btn-blue:hover { background-color: #1d4ed8; }
     .btn-emerald { background-color: #059669; color: white; }
     .btn-emerald:hover { background-color: #047857; }
+    .btn-secondary { background-color: #475569; color: white; font-size: 0.75rem; padding: 4px 10px; }
+    .btn-secondary:hover { background-color: #334155; }
+    .btn-danger { background-color: #dc2626; color: white; font-size: 0.75rem; padding: 4px 10px; }
+    .btn-danger:hover { background-color: #b91c1c; }
     
     main { 
       flex: 1; 
@@ -49,69 +60,71 @@
     }
     
     .panel-chat {
-      height: 40%; 
+      height: 45%; 
       display: flex; 
       flex-direction: column;
       border-bottom: 1px solid #334155; 
       background-color: #0f172a;
     }
     .panel-preview { 
-      height: 60%; 
+      height: 55%; 
       display: flex; 
       flex-direction: column; 
       background-color: #020617; 
     }
     
     @media (min-width: 768px) { 
-      .panel-chat { height: 100%; width: 40%; border-bottom: none; border-right: 1px solid #334155; }
-      .panel-preview { height: 100%; width: 60%; }
+      .panel-chat { height: 100%; width: 35%; border-bottom: none; border-right: 1px solid #334155; }
+      .panel-preview { height: 100%; width: 65%; }
     }
     
     .chat-history { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
     .msg { background-color: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155; font-size: 0.875rem; }
-    .msg-user .sender { color: #34d399; font-weight: bold; }
-    .msg-engine .sender { color: #38bdf8; font-weight: bold; }
+    .msg-user .sender { color: #34d399; font-weight: bold; margin: 0 0 4px 0; }
+    .msg-engine .sender { color: #38bdf8; font-weight: bold; margin: 0 0 4px 0; }
+    .msg-system .sender { color: #94a3b8; font-weight: bold; margin: 0 0 4px 0; }
     
-    .input-area { padding: 12px; background-color: #1e293b; display: flex; gap: 8px; border-t: 1px solid #334155; align-items: center; }
+    .input-area { padding: 12px; background-color: #1e293b; display: flex; gap: 8px; border-top: 1px solid #334155; align-items: center; }
     textarea {
       flex: 1; background-color: #0f172a; color: white; border: 1px solid #475569;
       border-radius: 6px; padding: 8px; font-size: 0.875rem; resize: none; height: 36px;
     }
     
-    .preview-bar { background-color: #1e293b; padding: 6px 16px; font-size: 0.75rem; color: #94a3b8; display: flex; justify-content: space-between; }
-    .sandbox-wrapper { flex: 1; margin: 12px; background-color: white; border-radius: 8px; overflow: hidden; }
-    iframe { width: 100%; height: 100%; border: none; }
+    .preview-bar { background-color: #1e293b; padding: 6px 16px; font-size: 0.75rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+    .preview-actions { display: flex; gap: 8px; }
+    .sandbox-wrapper { flex: 1; margin: 12px; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+    iframe { width: 100%; height: 100%; border: none; background-color: white; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1 class="logo">⚡ VibeCoder.ai</h1>
+    <div class="logo-area">
+      <h1 class="logo">⚡ VibeCoder.ai</h1>
+      <button id="new-project-btn" class="btn-danger" title="Clear current session and start fresh">New App</button>
+    </div>
     <div class="key-container">
-      <input type="password" id="api-key-input" placeholder="Paste OpenRouter Free Key">
+      <input type="password" id="api-key-input" placeholder="OpenRouter Free Key">
       <input type="text" id="model-input" value="openrouter/free" placeholder="Model Identifier">
-      <button id="save-key-btn" class="btn-blue">Save Configuration</button>
+      <button id="save-key-btn" class="btn-blue">Save Config</button>
     </div>
   </header>
 
   <main>
     <section class="panel-chat">
-      <div id="chat-history" class="chat-history">
-        <div class="msg">
-          <p style="color:#93c5fd; font-weight:bold; margin:0 0 4px 0;">System</p>
-          <p style="margin:0;">Enter your Key, choose a model, type your layout idea, and tap Vibe!</p>
-        </div>
-      </div>
+      <div id="chat-history" class="chat-history"></div>
       <div class="input-area">
-        <textarea id="prompt-input" placeholder="e.g., Build a countdown timer app..."></textarea>
+        <textarea id="prompt-input" placeholder="Modify your application layout here..."></textarea>
         <button id="generate-btn" class="btn-emerald">Vibe</button>
       </div>
     </section>
 
     <section class="panel-preview">
       <div class="preview-bar">
-        <span>LIVE PREVIEW</span>
-        <span id="status-indicator">Idle</span>
+        <div>STATUS: <span id="status-indicator" style="color: #38bdf8; font-weight: bold;">Idle</span></div>
+        <div class="preview-actions">
+          <button id="download-btn" class="btn-secondary">📥 Download Code</button>
+        </div>
       </div>
       <div class="sandbox-wrapper">
         <iframe id="preview-sandbox"></iframe>
@@ -131,7 +144,8 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
 [the new lines of code that should replace the search block]
 >>>>>>> REPLACE`;
 
-    let masterApplicationCode = ""; 
+    let masterApplicationCode = "";
+    let systemMessagesHistory = [];
 
     const apiKeyInput = document.getElementById('api-key-input');
     const modelInput = document.getElementById('model-input');
@@ -141,29 +155,95 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
     const chatHistory = document.getElementById('chat-history');
     const previewSandbox = document.getElementById('preview-sandbox');
     const statusIndicator = document.getElementById('status-indicator');
+    const downloadBtn = document.getElementById('download-btn');
+    const newProjectBtn = document.getElementById('new-project-btn');
 
+    // Load setup and persistent session data on startup
     window.addEventListener('DOMContentLoaded', () => {
       const savedKey = localStorage.getItem('openrouter_key');
       const savedModel = localStorage.getItem('openrouter_model');
       if (savedKey) apiKeyInput.value = savedKey;
       if (savedModel) modelInput.value = savedModel;
-      previewSandbox.srcdoc = "<h1 style='font-family:sans-serif; text-align:center; margin-top:40px; color:#64748b;'>Your AI app will render here live</h1>";
+
+      // Restore session history if it exists
+      const savedCode = localStorage.getItem('vibe_master_code');
+      const savedChat = localStorage.getItem('vibe_chat_history');
+
+      if (savedCode && savedChat) {
+        masterApplicationCode = savedCode;
+        systemMessagesHistory = JSON.parse(savedChat);
+        previewSandbox.srcdoc = masterApplicationCode;
+        renderChatFromHistory();
+      } else {
+        resetToDefaultWelcome();
+      }
     });
 
     saveKeyBtn.addEventListener('click', () => {
       localStorage.setItem('openrouter_key', apiKeyInput.value.trim());
       localStorage.setItem('openrouter_model', modelInput.value.trim());
-      alert('Configuration saved locally!');
+      alert('Configuration saved securely in your browser session!');
+    });
+
+    function resetToDefaultWelcome() {
+      chatHistory.innerHTML = `
+        <div class="msg msg-system">
+          <p class="sender">System</p>
+          <p style="margin:0;">Welcome to VibeCoder.ai! Add an OpenRouter Key, pick a model tier, then input a prompt down below to build or update single-page software structures instantly.</p>
+        </div>`;
+      masterApplicationCode = "";
+      systemMessagesHistory = [];
+      localStorage.removeItem('vibe_master_code');
+      localStorage.removeItem('vibe_chat_history');
+      previewSandbox.srcdoc = "<h1 style='font-family:sans-serif; text-align:center; margin-top:60px; color:#64748b;'>Your AI application renders live here</h1>";
+    }
+
+    newProjectBtn.addEventListener('click', () => {
+      if (confirm("Are you sure you want to clear your current code project and start fresh?")) {
+        resetToDefaultWelcome();
+      }
+    });
+
+    // Export generated code directly to an HTML file
+    downloadBtn.addEventListener('click', () => {
+      if (!masterApplicationCode) return alert("There is no code generated yet to download!");
+      const blob = new Blob([masterApplicationCode], { type: "text/html" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "vibe-app.html";
+      link.click();
     });
 
     function addChatMessage(sender, text) {
+      systemMessagesHistory.push({ sender, text });
+      localStorage.setItem('vibe_chat_history', JSON.stringify(systemMessagesHistory));
+      
       const isUser = sender === "You";
+      const isSys = sender === "System" || sender === "Engine Error";
+      const msgClass = isUser ? 'msg-user' : (isSys ? 'msg-system' : 'msg-engine');
+      
       const msgHtml = `
-        <div class="msg ${isUser ? 'msg-user' : 'msg-engine'}">
+        <div class="msg ${msgClass}">
           <p class="sender">${sender}</p>
-          <p style="margin:5px 0 0 0; white-space:pre-wrap;">${text}</p>
+          <p style="margin:0; white-space:pre-wrap;">${text}</p>
         </div>`;
       chatHistory.insertAdjacentHTML('beforeend', msgHtml);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function renderChatFromHistory() {
+      chatHistory.innerHTML = "";
+      systemMessagesHistory.forEach(msg => {
+        const isUser = msg.sender === "You";
+        const isSys = msg.sender === "System" || msg.sender === "Engine Error";
+        const msgClass = isUser ? 'msg-user' : (isSys ? 'msg-system' : 'msg-engine');
+        const msgHtml = `
+          <div class="msg ${msgClass}">
+            <p class="sender">${msg.sender}</p>
+            <p style="margin:0; white-space:pre-wrap;">${msg.text}</p>
+          </div>`;
+        chatHistory.insertAdjacentHTML('beforeend', msgHtml);
+      });
       chatHistory.scrollTop = chatHistory.scrollHeight;
     }
 
@@ -190,7 +270,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
       const prompt = promptInput.value.trim();
 
       if (!apiKey) return alert("Please enter and save your OpenRouter Key first!");
-      if (!prompt) return alert("Type a prompt!");
+      if (!prompt) return alert("Type a layout prompt!");
 
       addChatMessage("You", prompt);
       promptInput.value = "";
@@ -226,7 +306,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
           throw new Error(`API Error (${response.status}): ${errorDetails}`);
         }
 
-        if (!response.body) throw new Error("No readable data stream received.");
+        if (!response.body) throw new Error("No readable stream received.");
         
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -254,7 +334,7 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
                 const content = parsed.choices[0]?.delta?.content || "";
                 if (content) {
                   completeCodeOutput += content;
-                  responseTextContainer.innerText = "Writing source lines...";
+                  responseTextContainer.innerText = "Streaming application lines...";
                   
                   if (masterApplicationCode === "") {
                     previewSandbox.srcdoc = completeCodeOutput;
@@ -266,30 +346,32 @@ If the user is asking for a change, tweak, or bug fix to an app you already wrot
         }
 
         if (!completeCodeOutput.trim()) {
-          throw new Error("AI completed the call but generated zero lines of code.");
+          throw new Error("AI engine stream closed prematurely with zero code returns.");
         }
 
         if (masterApplicationCode === "") {
           masterApplicationCode = completeCodeOutput;
+          localStorage.setItem('vibe_master_code', masterApplicationCode);
           statusIndicator.innerText = "App Ready";
-          responseTextContainer.innerText = "Fresh application built successfully!";
+          responseTextContainer.innerText = "Fresh application framework initialized successfully!";
         } else {
           const result = applyCodePatches(masterApplicationCode, completeCodeOutput);
           if (result.patchCount > 0) {
             masterApplicationCode = result.patchedCode;
+            localStorage.setItem('vibe_master_code', masterApplicationCode);
             previewSandbox.srcdoc = masterApplicationCode;
-            statusIndicator.innerText = "Patched successfully";
-            responseTextContainer.innerText = `Applied ${result.patchCount} updates to the application layout!`;
+            statusIndicator.innerText = "App Patched";
+            responseTextContainer.innerText = `Applied ${result.patchCount} functional upgrades to your active layout container!`;
           } else {
             statusIndicator.innerText = "App Ready";
-            responseTextContainer.innerText = "Modification complete.";
+            responseTextContainer.innerText = "Modification run completed.";
           }
         }
 
       } catch (err) {
         console.error(err);
         statusIndicator.innerText = "Error";
-        addChatMessage("Engine Error", err.message || "Failed to compile code stream.");
+        addChatMessage("Engine Error", err.message || "Failed to parse streaming response tokens.");
       } finally {
         generateBtn.disabled = false;
       }
