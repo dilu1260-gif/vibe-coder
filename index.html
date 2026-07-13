@@ -1,327 +1,633 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- SEO Search Tags -->
-  <title>VibeCoder.ai - Instant AI Web App Generator</title>
-  <meta name="description" content="Build, preview, and deploy single-page web applications instantly in your browser using AI vibe coding.">
-  <meta name="keywords" content="vibe coding, ai code generator, openrouter, prompt to app, build websites with ai">
-  <meta name="author" content="dilu1260-gif">
-
+  <title>VibeCoder.ai — Engine Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
   <style>
     body {
-      margin: 0; padding: 0; box-sizing: border-box;
-      background-color: #0f172a; color: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
     }
-    header {
-      background-color: #1e293b; border-bottom: 1px solid #334155;
-      padding: 12px; display: flex; justify-content: space-between; align-items: center;
+    /* Smooth custom glassmorphism handles */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
     }
-    .logo-area { display: flex; align-items: center; gap: 10px; }
-    .logo { font-size: 1.25rem; font-weight: bold; color: #38bdf8; margin: 0; }
-    
-    button {
-      border: none; border-radius: 6px; padding: 6px 14px;
-      font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
-      display: inline-flex; align-items: center; gap: 4px;
+    .dark .glass-panel {
+      background: rgba(10, 10, 12, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
-    .btn-emerald { background-color: #059669; color: white; }
-    .btn-emerald:hover { background-color: #047857; }
-    .btn-secondary { background-color: #475569; color: white; font-size: 0.75rem; padding: 6px 12px; }
-    .btn-secondary:hover { background-color: #334155; }
-    .btn-danger { background-color: #dc2626; color: white; font-size: 0.75rem; padding: 4px 10px; }
-    .btn-danger:hover { background-color: #b91c1c; }
-    
-    main { 
-      flex: 1; 
-      display: flex; 
-      flex-direction: column; 
-      overflow: hidden; 
+    .glass-input {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    @media (min-width: 768px) { 
-      main { flex-direction: row; } 
+    .dark .glass-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.04);
     }
-    
-    .panel-chat {
-      height: 45%; 
-      display: flex; 
-      flex-direction: column;
-      border-bottom: 1px solid #334155; 
-      background-color: #0f172a;
+    .glass-input:focus {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
     }
-    .panel-preview { 
-      height: 55%; 
-      display: flex; 
-      flex-direction: column; 
-      background-color: #020617; 
+    /* Dynamic Fade In & Out Animations */
+    .fade-dynamic {
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
-    @media (min-width: 768px) { 
-      .panel-chat { height: 100%; width: 35%; border-bottom: none; border-right: 1px solid #334155; }
-      .panel-preview { height: 100%; width: 65%; }
+    .fade-hidden {
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
     }
-    
-    .chat-history { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-    .msg { background-color: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155; font-size: 0.875rem; }
-    .msg-user .sender { color: #34d399; font-weight: bold; margin: 0 0 4px 0; }
-    .msg-engine .sender { color: #38bdf8; font-weight: bold; margin: 0 0 4px 0; }
-    .msg-system .sender { color: #94a3b8; font-weight: bold; margin: 0 0 4px 0; }
-    
-    .input-area { padding: 12px; background-color: #1e293b; display: flex; gap: 8px; border-top: 1px solid #334155; align-items: center; }
-    textarea {
-      flex: 1; background-color: #0f172a; color: white; border: 1px solid #475569;
-      border-radius: 6px; padding: 8px; font-size: 0.875rem; resize: none; height: 36px;
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-    
-    .preview-bar { background-color: #1e293b; padding: 6px 16px; font-size: 0.75rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-    .preview-actions { display: flex; gap: 8px; }
-    .sandbox-wrapper { flex: 1; margin: 12px; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
-    iframe { width: 100%; height: 100%; border: none; background-color: white; }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
   </style>
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-[#060608] text-slate-800 dark:text-slate-100 min-h-screen relative transition-colors duration-500">
 
-  <header>
-    <div class="logo-area">
-      <h1 class="logo">⚡ VibeCoder.ai</h1>
-      <button id="new-project-btn" class="btn-danger" title="Clear current session and start fresh">New App</button>
-    </div>
-    <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Public Access Enabled</div>
-  </header>
+  <canvas id="fluid-aurora-canvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-80 dark:opacity-60"></canvas>
 
-  <main>
-    <section class="panel-chat">
-      <div id="chat-history" class="chat-history"></div>
-      <div class="input-area">
-        <textarea id="prompt-input" placeholder="What should we build or change?..."></textarea>
-        <button id="generate-btn" class="btn-emerald">Vibe</button>
+  <div class="relative z-10 flex flex-col min-h-screen">
+    
+    <header class="w-full px-6 py-4 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 backdrop-blur-md sticky top-0 z-40">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i data-lucide="sparkles" class="w-5 h-5 text-white animate-pulse"></i>
+        </div>
+        <span class="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-white dark:via-slate-200 dark:to-neutral-400">VibeCoder<span class="text-indigo-500">.ai</span></span>
       </div>
-    </section>
 
-    <section class="panel-preview">
-      <div class="preview-bar">
-        <div>STATUS: <span id="status-indicator" style="color: #38bdf8; font-weight: bold;">Idle</span></div>
-        <div class="preview-actions">
-          <button id="download-btn" class="btn-secondary">📥 Download Code</button>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleProjectsPanel()" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+          <i data-lucide="folder-git-2" class="w-4 h-4 text-indigo-400"></i>
+          <span>Projects</span>
+        </button>
+        
+        <button onclick="openAuthModal()" id="auth-nav-btn" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-black hover:opacity-90 transition-all shadow-sm">
+          <i data-lucide="user" class="w-4 h-4"></i>
+          <span id="auth-btn-label">Sign In</span>
+        </button>
+
+        <div class="h-5 w-[1px] bg-slate-200 dark:bg-white/10 mx-2"></div>
+
+        <button onclick="rotateTheme()" class="p-2.5 rounded-xl border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 transition-all" title="Toggle Display Mode">
+          <i id="theme-icon-indicator" data-lucide="moon" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+    <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 flex flex-col items-center justify-start gap-8">
+      
+      <div class="w-full max-w-3xl mt-4 z-20 transition-all duration-500">
+        <div class="glass-panel rounded-3xl p-6 shadow-2xl shadow-black/5 relative overflow-hidden group">
+          <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700"></div>
+          
+          <div class="flex items-start gap-4">
+            <div class="p-3 bg-indigo-500/10 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl hidden sm:block">
+              <i data-lucide="terminal" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1">
+              <h1 class="text-sm font-medium text-slate-400 dark:text-neutral-400 mb-1 tracking-wide uppercase">AI Vibe Coding Prompt</h1>
+              <textarea id="prompt-input" rows="3" oninput="triggerBackgroundReaction()" placeholder="Describe the application layout or features you want to build or change..." class="w-full glass-input text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 text-base rounded-2xl p-4 focus:outline-none resize-none mb-4"></textarea>
+              
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div id="active-project-tag" class="text-xs text-slate-400 dark:text-neutral-400 flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-slate-200/50 dark:border-white/5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Active: <span id="current-project-name" class="font-medium">Scratchpad App</span>
+                </div>
+                
+                <button onclick="executeVibeCommand()" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium text-sm rounded-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-indigo-500/20">
+                  <span>Compile Layout</span>
+                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="sandbox-wrapper">
-        <iframe id="preview-sandbox"></iframe>
+
+      <div id="output-workspace" class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch fade-dynamic fade-hidden flex-1 min-h-[500px] z-10">
+        
+        <div class="lg:col-span-4 flex flex-col gap-4">
+          <div class="glass-panel rounded-3xl p-5 flex-1 flex flex-col min-h-[250px] shadow-lg">
+            <div class="flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 pb-3 mb-4">
+              <div class="flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-purple-400"></i>
+                <h3 class="text-sm font-semibold tracking-tight">Compilation Engine</h3>
+              </div>
+              <span id="engine-status-badge" class="text-[11px] font-medium tracking-wide uppercase px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/5">Idle</span>
+            </div>
+            
+            <div id="engine-logs-box" class="flex-1 overflow-y-auto font-mono text-xs text-slate-500 dark:text-neutral-400 space-y-2 pr-1 max-h-[350px]">
+              <div class="text-slate-400 dark:text-neutral-500">// System ready. Waiting for live prompt compilation instructions...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-8 flex flex-col">
+          <div class="glass-panel rounded-3xl overflow-hidden flex-1 flex flex-col shadow-2xl relative min-h-[450px]">
+            <div class="px-5 py-3.5 bg-slate-100/40 dark:bg-black/20 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></span>
+                <span class="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/40"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40"></span>
+                <span class="text-xs font-medium text-slate-400 dark:text-neutral-400 ml-2 font-mono">sandbox-runtime.html</span>
+              </div>
+              <button onclick="downloadActiveSource()" class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-neutral-400 hover:text-indigo-400 transition-colors">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Export Source</span>
+              </button>
+            </div>
+            
+            <div class="flex-1 bg-white relative min-h-[380px]">
+              <div id="iframe-loader-overlay" class="absolute inset-0 bg-slate-900/10 backdrop-blur-sm flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+                <div class="flex flex-col items-center gap-3 bg-white dark:bg-neutral-900 px-6 py-4 rounded-2xl shadow-xl">
+                  <div class="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span class="text-xs font-medium">Re-rendering Frame...</span>
+                </div>
+              </div>
+              <iframe id="sandbox-iframe" src="about:blank" class="w-full h-full border-none bg-white"></iframe>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </section>
-  </main>
+    </main>
+  </div>
 
+  <div id="projects-panel" class="fixed inset-y-0 right-0 w-full sm:w-[440px] glass-panel border-l border-slate-200 dark:border-white/10 shadow-2xl z-50 transform translate-x-full transition-transform duration-500 ease-out p-6 flex flex-col">
+    <div class="flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 pb-4 mb-6">
+      <div class="flex items-center gap-2.5">
+        <i data-lucide="folder-open" class="w-5 h-5 text-indigo-400"></i>
+        <h2 class="text-lg font-bold tracking-tight">Workspace Projects</h2>
+      </div>
+      <button onclick="toggleProjectsPanel()" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-white transition-all">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <div id="projects-list-container" class="flex-1 overflow-y-auto space-y-3 JSON-injected-context pr-1">
+    </div>
+
+    <div class="border-t border-slate-200/50 dark:border-white/5 pt-4 mt-6">
+      <button onclick="createNewProjectContext()" class="w-full py-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-medium text-sm transition-all flex items-center justify-center gap-2">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span>Create New Project</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="auth-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 px-4">
+    <div class="glass-panel w-full max-w-md rounded-3xl p-6 shadow-2xl transform scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-white/5 mb-6">
+        <h3 class="text-base font-bold tracking-tight">Secure Account Login</h3>
+        <button onclick="closeAuthModal()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 dark:text-neutral-400 mb-6 leading-relaxed">Sync your local workspace structures to secure cross-device cloud persistence nodes instantly.</p>
+      
+      <div class="space-y-3">
+        <button onclick="simulateAuthSuccess('Google')" class="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-medium text-sm transition-all flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <i data-lucide="mail" class="w-4 h-4 text-red-400"></i>
+            <span>Continue with Google Account</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+        </button>
+
+        <button onclick="simulateAuthSuccess('Microsoft')" class="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-medium text-sm transition-all flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <i data-lucide="monitor" class="w-4 h-4 text-blue-400"></i>
+            <span>Continue with Windows Live ID</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+        </button>
+
+        <button onclick="simulateAuthSuccess('Phone Secure OTP')" class="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-medium text-sm transition-all flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400"></i>
+            <span>Secure Phone OTP Authentication</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+        </button>
+      </div>
+      
+      <div class="mt-6 pt-4 border-t border-slate-200/50 dark:border-white/5 text-center">
+        <span class="text-[11px] text-slate-400 dark:text-neutral-500 font-mono">Secure Token Verification Sub-Module Loaded</span>
+      </div>
+    </div>
+  </div>
   <script>
-    let masterApplicationCode = "";
-    let systemMessagesHistory = [];
+    // System Global States Engine Driver Store Variables
+    let activeProjectCode = '';
+    let appThemesList = ['dark', 'light'];
+    let currentThemeIndex = 0;
+    let localProjectsDatabase = [];
+    let activeProjectId = null;
+    let currentUserProfile = null;
 
-    const promptInput = document.getElementById('prompt-input');
-    const generateBtn = document.getElementById('generate-btn');
-    const chatHistory = document.getElementById('chat-history');
-    const previewSandbox = document.getElementById('preview-sandbox');
-    const statusIndicator = document.getElementById('status-indicator');
-    const downloadBtn = document.getElementById('download-btn');
-    const newProjectBtn = document.getElementById('new-project-btn');
+    // Real-Time Canvas Waves Setup Engine Config (Northern Lights Simulation Setup)
+    const canvas = document.getElementById('fluid-aurora-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    let globalVelocityFactor = 0.003; 
+    let backgroundInteractionTargetEnergy = 0.003; 
+    let backgroundMotionTicker = 0;
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedCode = localStorage.getItem('vibe_master_code');
-      const savedChat = localStorage.getItem('vibe_chat_history');
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
 
-      if (savedCode && savedChat) {
-        masterApplicationCode = savedCode;
-        systemMessagesHistory = JSON.parse(savedChat);
-        previewSandbox.srcdoc = masterApplicationCode;
-        renderChatFromHistory();
-      } else {
-        resetToDefaultWelcome();
+    // Custom multi-frequency wave oscillator parameters simulating real Aurora shifts
+    class AuroraWaveLine {
+      constructor(baseY, colorHex, amplitude, speedOffset) {
+        this.baseY = baseY;
+        this.color = colorHex;
+        this.amplitude = amplitude;
+        this.speedOffset = speedOffset;
       }
-    });
 
-    function resetToDefaultWelcome() {
-      chatHistory.innerHTML = `
-        <div class="msg msg-system">
-          <p class="sender">System</p>
-          <p style="margin:0;">Welcome to VibeCoder.ai! Type an application layout instruction below to start vibe coding instantly.</p>
-        </div>`;
-      masterApplicationCode = "";
-      systemMessagesHistory = [];
-      localStorage.removeItem('vibe_master_code');
-      localStorage.removeItem('vibe_chat_history');
-      previewSandbox.srcdoc = "<h1 style='font-family:sans-serif; text-align:center; margin-top:60px; color:#64748b;'>Your AI application renders live here</h1>";
-    }
-
-    newProjectBtn.addEventListener('click', () => {
-      if (confirm("Are you sure you want to clear your current code project and start fresh?")) {
-        resetToDefaultWelcome();
-      }
-    });
-
-    downloadBtn.addEventListener('click', () => {
-      if (!masterApplicationCode) return alert("There is no code generated yet to download!");
-      const blob = new Blob([masterApplicationCode], { type: "text/html" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "vibe-app.html";
-      link.click();
-    });
-
-    function addChatMessage(sender, text) {
-      systemMessagesHistory.push({ sender, text });
-      localStorage.setItem('vibe_chat_history', JSON.stringify(systemMessagesHistory));
-      
-      const isUser = sender === "You";
-      const isSys = sender === "System" || sender === "Engine Error";
-      const msgClass = isUser ? 'msg-user' : (isSys ? 'msg-system' : 'msg-engine');
-      
-      const msgHtml = `
-        <div class="msg ${msgClass}">
-          <p class="sender">${sender}</p>
-          <p style="margin:0; white-space:pre-wrap;">${text}</p>
-        </div>`;
-      chatHistory.insertAdjacentHTML('beforeend', msgHtml);
-      chatHistory.scrollTop = chatHistory.scrollHeight;
-    }
-
-    function renderChatFromHistory() {
-      chatHistory.innerHTML = "";
-      systemMessagesHistory.forEach(msg => {
-        const isUser = msg.sender === "You";
-        const isSys = msg.sender === "System" || msg.sender === "Engine Error";
-        const msgClass = isUser ? 'msg-user' : (isSys ? 'msg-system' : 'msg-engine');
-        const msgHtml = `
-          <div class="msg ${msgClass}">
-            <p class="sender">${msg.sender}</p>
-            <p style="margin:0; white-space:pre-wrap;">${msg.text}</p>
-          </div>`;
-        chatHistory.insertAdjacentHTML('beforeend', msgHtml);
-      });
-      chatHistory.scrollTop = chatHistory.scrollHeight;
-    }
-
-    function applyCodePatches(currentCode, aiResponse) {
-      const patchRegex = /<<<<<<< SEARCH\n([\s\S]*?)\n=======\n([\s\S]*?)\n>>>>>>> REPLACE/g;
-      let patchedCode = currentCode;
-      let match;
-      let patchCount = 0;
-
-      while ((match = patchRegex.exec(aiResponse)) !== null) {
-        const searchBlock = match[1];
-        const replaceBlock = match[2];
-        if (patchedCode.includes(searchBlock)) {
-          patchedCode = patchedCode.replace(searchBlock, replaceBlock);
-          patchCount++;
+      render(tickerTime) {
+        ctx.beginPath();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 140;
+        ctx.globalAlpha = 0.12;
+        ctx.lineCap = 'round';
+        
+        for (let x = 0; x < width; x += 10) {
+          // Complex dynamic interference calculation equations
+          let waveOne = Math.sin(x * 0.002 + tickerTime * this.speedOffset) * this.amplitude;
+          let waveTwo = Math.cos(x * 0.005 - tickerTime * (this.speedOffset * 0.7)) * (this.amplitude * 0.4);
+          let combinedY = this.baseY + waveOne + waveTwo;
+          
+          if (x === 0) ctx.moveTo(x, combinedY);
+          else ctx.lineTo(x, combinedY);
         }
+        ctx.stroke();
       }
-      return { patchedCode, patchCount };
     }
 
-    generateBtn.addEventListener('click', async () => {
-      const prompt = promptInput.value.trim();
-      if (!prompt) return alert("Type a layout prompt!");
+    // Colorways map matches the comfort preferences of the user
+    const activeAuroraWavesPool = [
+      new AuroraWaveLine(height * 0.3, '#6366f1', 120, 1.2), // Indigo Wave Vector
+      new AuroraWaveLine(height * 0.5, '#a855f7', 150, 0.8), // Purple Flow Vector
+      new AuroraWaveLine(height * 0.4, '#ec4899', 100, 1.5), // Pink Shift Vector
+      new AuroraWaveLine(height * 0.6, '#06b6d4', 130, 0.9)  // Cyan Secondary Base
+    ];
 
-      addChatMessage("You", prompt);
-      promptInput.value = "";
-      statusIndicator.innerText = "Coding...";
-      generateBtn.disabled = true;
+    // High performance background animation loop running at native browser speeds
+    function executeBackgroundFrameAnimation() {
+      // Smooth interpolation decay function handling user interactions kinetics
+      globalVelocityFactor += (backgroundInteractionTargetEnergy - globalVelocityFactor) * 0.04;
+      backgroundMotionTicker += globalVelocityFactor;
+      
+      // Decay baseline energy smoothly back down towards peaceful rest settings
+      if (backgroundInteractionTargetEnergy > 0.003) {
+        backgroundInteractionTargetEnergy -= 0.0002;
+      } else {
+        backgroundInteractionTargetEnergy = 0.003;
+      }
 
-      let completeCodeOutput = "";
+      // Clear frames with translucent overlays to provide deep native trails effects
+      ctx.globalCompositeOperation = 'source-over';
+      if (document.documentElement.classList.contains('dark')) {
+        ctx.fillStyle = 'rgba(6, 6, 8, 0.08)';
+      } else {
+        ctx.fillStyle = 'rgba(248, 250, 252, 0.08)';
+      }
+      ctx.fillRect(0, 0, width, height);
+      
+      ctx.globalCompositeOperation = 'screen';
+      activeAuroraWavesPool.forEach(waveInstance => waveInstance.render(backgroundMotionTicker));
+
+      requestAnimationFrame(executeBackgroundFrameAnimation);
+    }
+
+    // Reaction event drivers: Spikes background kinetic velocity parameters upon keystrokes or submit signals
+    function triggerBackgroundReaction() {
+      backgroundInteractionTargetEnergy = Math.min(backgroundInteractionTargetEnergy + 0.004, 0.035);
+    }
+    window.addEventListener('click', triggerBackgroundReaction);
+    window.addEventListener('touchstart', triggerBackgroundReaction);
+
+    // Initial Startup Configuration Engine Bootstrapper
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initializeDefaultWorkspaceState();
+      requestAnimationFrame(executeBackgroundFrameAnimation);
+    });
+
+    // Rotation tracking engine manages display settings
+    function rotateTheme() {
+      const docElement = document.documentElement;
+      const themeIcon = document.getElementById('theme-icon-indicator');
+      
+      if (docElement.classList.contains('dark')) {
+        docElement.classList.remove('dark');
+        themeIcon.setAttribute('data-lucide', 'sun');
+        localStorage.setItem('workspace-theme-preference', 'light');
+      } else {
+        docElement.classList.add('dark');
+        themeIcon.setAttribute('data-lucide', 'moon');
+        localStorage.setItem('workspace-theme-preference', 'dark');
+      }
+      lucide.createIcons();
+    }
+
+    // Modal UI State Switches
+    function openAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      modal.classList.remove('pointer-events-none', 'opacity-0');
+      modal.querySelector('.glass-panel').classList.remove('scale-95');
+    }
+    
+    function closeAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      modal.classList.add('pointer-events-none', 'opacity-0');
+      modal.querySelector('.glass-panel').classList.add('scale-95');
+    }
+
+    function toggleProjectsPanel() {
+      const panel = document.getElementById('projects-panel');
+      panel.classList.toggle('translate-x-full');
+    }
+
+    // Handles simulation steps verifying account data storage nodes
+    function simulateAuthSuccess(providerLabel) {
+      currentUserProfile = { name: "Dev", method: providerLabel };
+      document.getElementById('auth-btn-label').innerText = "Dev";
+      closeAuthModal();
+      logSystemMessage(`Authenticated successfully using cloud provider verification node: ${providerLabel}. Storage active.`);
+    }
+
+    // Persistent Database Engine Handler Scripts (Local Storage Driver Frameworks)
+    function initializeDefaultWorkspaceState() {
+      const savedProjects = localStorage.getItem('vibe-coder-projects-db');
+      if (savedProjects) {
+        localProjectsDatabase = JSON.parse(savedProjects);
+      } else {
+        localProjectsDatabase = [
+          {
+            id: 'proj-scratch',
+            name: 'Scratchpad App',
+            code: '\n<div class="p-8 text-center font-sans">\n  <h1 class="text-3xl font-bold text-indigo-600 mb-2">Hello World</h1>\n  <p class="text-gray-500 text-sm">Welcome to your active UI live compiler preview context.</p>\n</div>',
+            timestamp: Date.now()
+          }
+        ];
+        saveProjectsStateToStorage();
+      }
+
+      const lastActiveId = localStorage.getItem('vibe-coder-active-id');
+      if (lastActiveId && localProjectsDatabase.find(p => p.id === lastActiveId)) {
+        loadActiveProjectContext(lastActiveId);
+      } else {
+        loadActiveProjectContext(localProjectsDatabase[0].id);
+      }
+      renderProjectsListMarkup();
+    }
+
+    function saveProjectsStateToStorage() {
+      localStorage.setItem('vibe-coder-projects-db', JSON.stringify(localProjectsDatabase));
+    }
+
+    function createNewProjectContext() {
+      const uniqueId = 'proj-' + Date.now();
+      const newProject = {
+        id: uniqueId,
+        name: `App v${localProjectsDatabase.length + 1}`,
+        code: '\n<div class="h-screen flex items-center justify-center bg-slate-50">\n  <div class="text-center">\n    <h2 class="text-xl font-bold text-slate-700">Empty Workspace</h2>\n    <p class="text-sm text-slate-400">Describe what you want to build in the system command box above.</p>\n  </div>\n</div>',
+        timestamp: Date.now()
+      };
+      localProjectsDatabase.push(newProject);
+      saveProjectsStateToStorage();
+      loadActiveProjectContext(uniqueId);
+      renderProjectsListMarkup();
+      logSystemMessage(`Initialized clear clean project workspace scope: [${newProject.name}]`);
+    }
+
+    // Flash load operations into sandbox target frame
+    function loadActiveProjectContext(id) {
+      const targetedProject = localProjectsDatabase.find(p => p.id === id);
+      if (!targetedProject) return;
+
+      activeProjectId = id;
+      activeProjectCode = targetedProject.code;
+      document.getElementById('current-project-name').innerText = targetedProject.name;
+      localStorage.setItem('vibe-coder-active-id', id);
+
+      const frameElement = document.getElementById('sandbox-iframe');
+      frameElement.srcdoc = activeProjectCode;
+      
+      const workspaceWrapper = document.getElementById('output-workspace');
+      if (workspaceWrapper.classList.contains('fade-hidden')) {
+        workspaceWrapper.classList.remove('fade-hidden');
+      }
+    }
+
+    function deleteProjectContext(id, clickEvent) {
+      clickEvent.stopPropagation(); 
+      if (localProjectsDatabase.length <= 1) {
+        alert("System warning: Cannot drop or delete your lone fallback project node context.");
+        return;
+      }
+
+      localProjectsDatabase = localProjectsDatabase.filter(p => p.id !== id);
+      saveProjectsStateToStorage();
+      
+      if (activeProjectId === id) {
+        loadActiveProjectContext(localProjectsDatabase[0].id);
+      }
+      renderProjectsListMarkup();
+      logSystemMessage(`Purged project block data node completely.`);
+    }
+
+    function shareProjectLink(id, clickEvent) {
+      clickEvent.stopPropagation();
+      const mockShareUrl = `${window.location.origin}?projectReferenceToken=${id}`;
+      navigator.clipboard.writeText(mockShareUrl);
+      alert("Project sharing manifest snapshot reference link cloned to clipboard safely!");
+      logSystemMessage(`Generated temporary immutable snapshot link parameters layout shareable pointer.`);
+    }
+
+    // UI View Assembly Loop Component Builder Engines
+    function renderProjectsListMarkup() {
+      const targetContainer = document.getElementById('projects-list-container');
+      targetContainer.innerHTML = '';
+
+      localProjectsDatabase.forEach(projectItem => {
+        const isCurrentActive = projectItem.id === activeProjectId;
+        const projectItemRow = document.createElement('div');
+        projectItemRow.className = `p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+          isCurrentActive 
+            ? 'bg-indigo-500/10 border-indigo-500/30 shadow-md shadow-indigo-500/5' 
+            : 'bg-white/5 border-white/5 hover:bg-white/10'
+        }`;
+        projectItemRow.setAttribute('onclick', `loadActiveProjectContext('${projectItem.id}')`);
+        
+        projectItemRow.innerHTML = `
+          <div class="flex flex-col gap-0.5 max-w-[65%]">
+            <span class="text-sm font-semibold truncate ${isCurrentActive ? 'text-indigo-400' : ''}">${projectItem.name}</span>
+            <span class="text-[10px] text-slate-400 font-mono tracking-tight">${new Date(projectItem.timestamp).toLocaleDateString()}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="shareProjectLink('${projectItem.id}', event)" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 text-slate-400 hover:text-indigo-400 transition-colors" title="Share Snapshot Link">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteProjectContext('${projectItem.id}', event)" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/5 text-slate-400 hover:text-red-400 transition-colors" title="Delete Project Node">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        targetContainer.appendChild(projectItemRow);
+      });
+      lucide.createIcons();
+    }
+
+    // Logger UI Output Dispatch Interface Methods
+    function logSystemMessage(messageText, level = 'sys') {
+      const logsBox = document.getElementById('engine-logs-box');
+      const timestampLabel = new Date().toLocaleTimeString();
+      const logElement = document.createElement('div');
+      logElement.className = `fade-dynamic font-mono tracking-tight leading-relaxed ${
+        level === 'err' ? 'text-red-400' : level === 'process' ? 'text-indigo-400 font-medium' : 'text-slate-400 dark:text-neutral-500'
+      }`;
+      logElement.innerHTML = `[${timestampLabel}] ${level === 'err' ? '✖' : '⚡'} ${messageText}`;
+      logsBox.appendChild(logElement);
+      logsBox.scrollTop = logsBox.scrollHeight;
+    }
+
+    // High Availability Upstream Deployment Server Pipeline Interface Engine
+    async function executeVibeCommand() {
+      const promptField = document.getElementById('prompt-input');
+      const promptValue = promptField.value.trim();
+      if (!promptValue) return;
+
+      const statusBadge = document.getElementById('engine-status-badge');
+      const loaderOverlay = document.getElementById('iframe-loader-overlay');
+      const workspaceWrapper = document.getElementById('output-workspace');
+
+      // Expand output frames workspace if collapsed during runtime setup
+      workspaceWrapper.classList.remove('fade-hidden');
+      
+      statusBadge.innerText = "Compiling";
+      statusBadge.className = "text-[11px] font-medium tracking-wide uppercase px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20";
+      loaderOverlay.classList.remove('hidden');
+      setTimeout(() => loaderOverlay.classList.remove('opacity-0'), 10);
+
+      logSystemMessage(`Opening request pipeline channel streams...`, 'process');
+      logSystemMessage(`Analyzing layout directives: "${promptValue.substring(0, 45)}..."`);
 
       try {
-        // CALLING SECURE BACKEND PROXY (Hides your OpenRouter key completely)
-        const response = await fetch("/api/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+        const serverResponse = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt: prompt,
-            masterCode: masterApplicationCode,
-            systemHistory: systemMessagesHistory
+            prompt: promptValue,
+            masterCode: activeProjectCode
           })
         });
 
-        if (!response.ok) {
-          const errorDetails = await response.text();
-          throw new Error(`API Proxy Error (${response.status}): ${errorDetails}`);
+        if (!serverResponse.ok) {
+          const detailedFailurePayload = await serverResponse.json();
+          throw new Error(detailedFailurePayload.error || `Server connection dropped down: status code ${serverResponse.status}`);
         }
 
-        if (!response.body) throw new Error("No readable data stream returned from proxy.");
+        // Setup streaming data parser mechanics pipelines safely
+        const dataTransferReader = serverResponse.body.getReader();
+        const dataDecoder = new TextDecoder();
+        let collectedBuffer = '';
         
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        
-        addChatMessage("Engine", "Thinking...");
-        const responseTextContainer = chatHistory.lastElementChild.querySelector('p:nth-child(2)');
-
-        let streamBuffer = ""; 
+        logSystemMessage("Upstream handshake validated. Raw byte stream processing initialized...", "process");
 
         while (true) {
-          const { value, done } = await reader.read();
+          const { done, value } = await dataTransferReader.read();
           if (done) break;
 
-          streamBuffer += decoder.decode(value, { stream: true });
-          const lines = streamBuffer.split("\n");
-          streamBuffer = lines.pop(); 
-
-          for (const line of lines) {
-            const cleanLine = line.trim();
-            if (cleanLine.startsWith("data: ")) {
-              const dataText = cleanLine.slice(6).trim();
-              if (dataText === "[DONE]") break;
-              try {
-                const parsed = JSON.parse(dataText);
-                const content = parsed.choices[0]?.delta?.content || "";
-                if (content) {
-                  completeCodeOutput += content;
-                  responseTextContainer.innerText = "Streaming layout code lines...";
-                  
-                  if (masterApplicationCode === "") {
-                    previewSandbox.srcdoc = completeCodeOutput;
-                  }
-                }
-              } catch (e) {}
-            }
-          }
+          const stringChunk = dataDecoder.decode(value, { stream: true });
+          collectedBuffer += stringChunk;
+          
+          // Continuously route layout chunks to keep frame UI completely responsive
+          document.getElementById('sandbox-iframe').srcdoc = collectedBuffer;
         }
 
-        if (!completeCodeOutput.trim()) {
-          throw new Error("AI engine stream closed prematurely with zero code returns.");
+        activeProjectCode = collectedBuffer;
+        
+        // Persist code results locally
+        const matchingProject = localProjectsDatabase.find(p => p.id === activeProjectId);
+        if (matchingProject) {
+          matchingProject.code = activeProjectCode;
+          matchingProject.timestamp = Date.now();
+          saveProjectsStateToStorage();
+          renderProjectsListMarkup();
         }
 
-        if (masterApplicationCode === "") {
-          masterApplicationCode = completeCodeOutput;
-          localStorage.setItem('vibe_master_code', masterApplicationCode);
-          statusIndicator.innerText = "App Ready";
-          responseTextContainer.innerText = "Fresh application framework initialized successfully!";
-        } else {
-          const result = applyCodePatches(masterApplicationCode, completeCodeOutput);
-          if (result.patchCount > 0) {
-            masterApplicationCode = result.patchedCode;
-            localStorage.setItem('vibe_master_code', masterApplicationCode);
-            previewSandbox.srcdoc = masterApplicationCode;
-            statusIndicator.innerText = "App Patched";
-            responseTextContainer.innerText = `Applied ${result.patchCount} updates to your active layout container!`;
-          } else {
-            statusIndicator.innerText = "App Ready";
-            responseTextContainer.innerText = "Modification run completed.";
-          }
-        }
+        logSystemMessage("Full UI stack rebuilt cleanly. Dynamic sandbox refreshed layout nodes.", "sys");
+        promptField.value = ''; 
 
-      } catch (err) {
-        console.error(err);
-        statusIndicator.innerText = "Error";
-        addChatMessage("Engine Error", err.message || "Failed to process streaming server tokens.");
+      } catch (pipelineExecutionError) {
+        logSystemMessage(pipelineExecutionError.message, 'err');
+        alert(`Compilation Error Encountered: ${pipelineExecutionError.message}`);
       } finally {
-        generateBtn.disabled = false;
+        // Reset interactive visual parameters smoothly
+        statusBadge.innerText = "Idle";
+        statusBadge.className = "text-[11px] font-medium tracking-wide uppercase px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/5";
+        
+        loaderOverlay.classList.add('opacity-0');
+        setTimeout(() => loaderOverlay.classList.add('hidden'), 300);
       }
-    });
+    }
+
+    // Local Disk Asset Exporter Utilities
+    function downloadActiveSource() {
+      if (!activeProjectCode) return;
+      const downloadElement = document.createElement('a');
+      downloadElement.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(activeProjectCode));
+      downloadElement.setAttribute('download', 'compiled-vibe-layout.html');
+      downloadElement.style.display = 'none';
+      document.body.appendChild(downloadElement);
+      downloadElement.click();
+      document.body.removeChild(downloadElement);
+      logSystemMessage("Standalone code module exported down into user local machine path successfully.");
+    }
   </script>
 </body>
 </html>
